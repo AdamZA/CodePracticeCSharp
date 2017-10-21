@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Practice2017.Project_Euler
@@ -51,10 +52,16 @@ namespace Practice2017.Project_Euler
             #region Q3
             //The prime factors of 13195 are 5, 7, 13 and 29.
             //What is the largest prime factor of the number 600851475143 ?
+            var watch = Stopwatch.StartNew();
+
             long problemThreeResult = 0;
             long numberToTestAgainst = 600851475143;
-
-            for (long i = (int)Math.Sqrt(600851475143); i > 0; i--)
+            var upperLimit = numberToTestAgainst;
+            if (numberToTestAgainst % 2 == 0)
+            {
+                upperLimit /= 2;
+            }
+            for (long i = (int)Math.Sqrt(upperLimit); i > 0; i--)
             {
                 if (isPrime(i) && isFactor(i, numberToTestAgainst))
                 {
@@ -63,7 +70,39 @@ namespace Practice2017.Project_Euler
                 }
             }
 
+            watch.Stop();
+            var elapsedMs = watch.ElapsedMilliseconds;
+
             Debug.WriteLine("Problem 3: {0}", problemThreeResult);
+            Debug.WriteLine("Time taken: {0}s", elapsedMs/1000.0);
+            #endregion
+            #region Q3 v2
+            var watch2 = Stopwatch.StartNew();
+            long problemThreeResultv2 = 0;
+            long numberToTestAgainstv2 = 600851475143;
+            var upperLimitv2 = numberToTestAgainstv2;
+            if (numberToTestAgainstv2 % 2 == 0)
+            {
+                upperLimitv2 /= 2;
+            }
+
+            var primeList = getPrimesUpToTerm((long)Math.Sqrt(upperLimitv2));
+            primeList.Reverse();
+
+            foreach (long term in primeList)
+            {
+                if (numberToTestAgainstv2 % term == 0)
+                {
+                    problemThreeResultv2 = term;
+                    break;
+                }
+            }
+
+
+            watch2.Stop();
+            var elapsedMs2 = watch2.ElapsedMilliseconds;
+            Debug.WriteLine("Problem 3 v2: {0}", problemThreeResultv2);
+            Debug.WriteLine("Time taken: {0}s", elapsedMs2/1000.0);
             #endregion
         }
 
@@ -123,6 +162,78 @@ namespace Practice2017.Project_Euler
         private static bool isFactor(long testFactor, long testNumber)
         {
             return (testNumber % testFactor == 0);
+        }
+
+        private static int maxNumber = (int)Math.Sqrt(Int32.MaxValue);
+
+        private static List<long> getPrimesUpToTerm(long term)
+        {
+            if (term <= 0)
+            {
+                return new List<long>();
+            }
+
+            if (term == 1)
+                return new List<long>();
+            if (term == 2)
+                return new List<long> { 2 };
+
+            bool[] naturalNumbers = new bool[term];
+            naturalNumbers[0] = true;
+            naturalNumbers[1] = true;
+
+            for (int i = 2; i <= term; i++)
+            {
+                if (i < maxNumber)
+                    naturalNumbers = flagNonPrimesUpToMax(i, naturalNumbers);
+                else
+                    break;
+            }
+
+            List<long> returnList = new List<long>();
+
+            for (int j = 0; j < naturalNumbers.Length; j++)
+            {
+                if (!naturalNumbers[j])
+                {
+                    returnList.Add(j);
+                }
+            }
+
+            return returnList;
+        }
+
+        public static bool[] flagNonPrimesUpToMax(long term, bool[] list)
+        {
+            for(long i = term*2; i < list.Length; i+= term)
+            {
+                list[i] = true;
+            }
+            return list;
+        }
+
+        //Fails when max > ~8000, due to stack size limitations. 
+        private static bool[] flagNonPrimesUpToMaxRecursive(long term, bool[] list, long max, long multiplier)
+        {
+            if (term * multiplier >= list.Length || term * multiplier >= max)
+            {
+                return list;
+            }
+                
+            else
+            {
+                if(1 == multiplier)
+                {
+                    multiplier++;
+                    return (flagNonPrimesUpToMaxRecursive(term, list, max, multiplier));
+                }
+                else
+                {
+                    list[term*multiplier] = true;
+                    multiplier++;
+                    return (flagNonPrimesUpToMaxRecursive(term, list, max, multiplier));
+                }
+            }
         }
         #endregion
     }
